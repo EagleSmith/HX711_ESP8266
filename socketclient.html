@@ -1,0 +1,24 @@
+<html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/smoothie/1.27.0/smoothie.min.js"></script>
+<script>   	
+	var series = new TimeSeries();
+   	function onLoad() {
+		var chart = new SmoothieChart(),
+		    canvas = document.getElementById('smoothie-chart');
+
+		chart.addTimeSeries(series, {lineWidth:2,strokeStyle:'#00ff00'});
+		chart.streamTo(canvas, 0);
+   	}
+	ws = new WebSocket("ws://10.1.10.97:81")
+    ws.onmessage = function (evt) 
+    { 
+        var received_msg = evt.data;
+		series.append(new Date().getTime(), received_msg);
+		console.log(received_msg)
+    };		
+</script>
+<body onload="onLoad()">
+<canvas id="smoothie-chart" width="1000" height="200">
+</body>
+</html>
