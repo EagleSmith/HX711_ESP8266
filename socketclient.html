@@ -2,23 +2,65 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/smoothie/1.27.0/smoothie.min.js"></script>
 <script>   	
-	var series = new TimeSeries();
-   	function onLoad() {
-		var chart = new SmoothieChart(),
-		    canvas = document.getElementById('smoothie-chart');
+	var series1 = new TimeSeries();
+   	var series2 = new TimeSeries();
 
-		chart.addTimeSeries(series, {lineWidth:2,strokeStyle:'#00ff00'});
-		chart.streamTo(canvas, 0);
+	function onLoad() {
+		var chart1 = new SmoothieChart({millisPerPixel:10}),
+		    canvas1 = document.getElementById('smoothie-chart1');
+
+		chart1.addTimeSeries(series1, {lineWidth:2,strokeStyle:'#00ff00'});
+		chart1.streamTo(canvas1, 0);
+
+		var chart2 = new SmoothieChart({millisPerPixel:10}),
+		    canvas2 = document.getElementById('smoothie-chart2');
+
+		chart2.addTimeSeries(series2, {lineWidth:2,strokeStyle:'#ff0000'});
+		chart2.streamTo(canvas2, 0);
+
+		setInterval(function () { updateSps();},500);
    	}
-	ws = new WebSocket("ws://10.1.10.97:81")
-    ws.onmessage = function (evt) 
+
+   	var lastSpsCalcTime = Date.now();
+
+   	function updateSps() {
+   		currentTime = Date.now();
+   		deltaT = currentTime - lastSpsCalcTime;
+   		lastSpsCalcTime = currentTime;
+   		$("#spsLabel1").text( Math.round(msgCount1 *  1000/deltaT));
+   		$("#spsLabel2").text( Math.round(msgCount2 *  1000/deltaT));
+   		msgCount1=0;
+   		msgCount2=0;
+   	}
+
+   	var msgCount1 = 0;
+   	var msgCount2 = 0;
+	ws1 = new WebSocket("ws://10.1.10.97:81");
+    ws1.onmessage = function (evt) 
     { 
-        var received_msg = evt.data;
-		series.append(new Date().getTime(), received_msg);
-		console.log(received_msg)
-    };		
+        var received_msg = parseInt(evt.data);
+		series1.append(new Date().getTime(), received_msg);
+		console.log("1: "+received_msg);
+		msgCount1++;
+    };
+
+    ws2 = new WebSocket("ws://10.1.10.57:81");
+    ws2.onmessage = function (evt) 
+    { 
+        var received_msg = parseInt(evt.data);
+		series2.append(new Date().getTime(), received_msg);
+		$("#load2").text((received_msg-8357500)/10000);
+		console.log("2: "+received_msg);
+		msgCount2++;
+    };
+
 </script>
 <body onload="onLoad()">
-<canvas id="smoothie-chart" width="1000" height="200">
+<canvas id="smoothie-chart1" width="1280" height="300"></canvas>
+
+<div id="spsLabel1">?</div>
+<canvas id="smoothie-chart2" width="1280" height="300"></canvas>
+<div id="spsLabel2">?</div>
+<div id="load2" style="font-size:144px;" class="load">?</div>
 </body>
 </html>

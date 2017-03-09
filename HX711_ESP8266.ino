@@ -13,8 +13,9 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 #define CLK 14
 #define DAT 13
 
-const char* ssid     = "GLASS";
-const char* password = "MITMEDIALAB";
+const char* ssid     = "YOUR_SSID_HERE";
+const char* password = "YOUR_PASSWORD_HERE";
+
 
 unsigned long count;
 
@@ -70,9 +71,8 @@ void setup() {
         Serial.flush();
         delay(1000);
     }
-
  
-    WiFiMulti.addAP("SSID", "passpasspass");
+    WiFiMulti.addAP(ssid, password);
 
     while(WiFiMulti.run() != WL_CONNECTED) {
         delay(100);
@@ -80,8 +80,6 @@ void setup() {
 
     webSocket.begin();
     webSocket.onEvent(webSocketEvent);
-    
- 
 }
 
 
