@@ -7,25 +7,25 @@ var configuration = {
 
   //baseline needs to be re-done, bat+adc needs to be re-done
   "192.168.1.191" : {
-    name: "3 Lobe",
+    name: "3Lobe",
     baseline: 8455000,
     stepsPerKilo: 5000,
     adc: [658,754],
     bat: [376,430]
   },
 
-  //baseline needs to be re-done, bat+adc needs to be re-done
+  //bat+adc needs to be re-done
     "192.168.1.192" : {
-    name: "4 Lobe",
-    baseline: 8455000,
+    name: "4Lobe",
+    baseline: 8322000,
     stepsPerKilo: 10000,
-    adc: [658,754],
-    bat: [376,430]
+    adc: [658,757],
+    bat: [376,420]
   },
 
   //ALL checked
   "192.168.1.193" : {
-    name: "5 Lobe",
+    name: "5Lobe",
     baseline: 8380000,
     stepsPerKilo: 10000,
     adc: [658,754],
@@ -86,12 +86,12 @@ udp_server.on('message',function(msg,info){
   config = configuration[info.address.split(":")[0]];
 
   batData = (mapValue(adcData,config.adc[0],config.adc[1],config.bat[0],config.bat[1])/100).toFixed(2);
-  loadKgData = ((loadData - config.baseline)/config.stepsPerKilo).toFixed(2);
+  loadKgData = ((loadData - config.baseline)/config.stepsPerKilo);
 
   console.log(loadData);
   console.log(adcData);
 
-  broadcastJsonStr = JSON.stringify({ name : config.name, loadKg : loadKgData, adc : adcData, bat: batData });
+  broadcastJsonStr = JSON.stringify({ name : config.name, loadRaw: loadData, loadKg : loadKgData, adc : adcData, bat: batData });
   console.log(broadcastJsonStr);
   broadcast(ws_server, broadcastJsonStr);
 });

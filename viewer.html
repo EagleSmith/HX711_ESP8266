@@ -8,16 +8,40 @@
     font-family: monospace;
 }
 
+body {
+	background-color: #222;
+}
+
 </style>
 <script>   	
+	var msgCount = [];
 	var series1 = new TimeSeries();
- 
+	var series2 = new TimeSeries();
+	var series3 = new TimeSeries();
+	var series = [];
+	series[ "5Lobe" ] =  series1;
+	series[ "4Lobe" ] =  series2;
+	series[ "3Lobe" ] =  series3;
+	
 	function onLoad() {
 		var chart1 = new SmoothieChart({millisPerPixel:10}),
-		    canvas1 = document.getElementById('loadcell1_chart');
+		    canvas1 = document.getElementById('5Lobe_chart');
 
 		chart1.addTimeSeries(series1, {lineWidth:2,strokeStyle:'#00ff00'});
 		chart1.streamTo(canvas1, 0);
+
+		var chart2 = new SmoothieChart({millisPerPixel:10}),
+		    canvas2 = document.getElementById('4Lobe_chart');
+
+		chart2.addTimeSeries(series2, {lineWidth:2,strokeStyle:'#ff0000'});
+		chart2.streamTo(canvas2, 0);
+
+		var chart3 = new SmoothieChart({millisPerPixel:10}),
+		    canvas3 = document.getElementById('3Lobe_chart');
+
+		chart3.addTimeSeries(series3, {lineWidth:2,strokeStyle:'#0000ff'});
+		chart3.streamTo(canvas3, 0);
+
 
 		setInterval(function () { updateSps();},500);
    	}
@@ -28,14 +52,14 @@
    		currentTime = Date.now();
    		deltaT = currentTime - lastSpsCalcTime;
    		lastSpsCalcTime = currentTime;
-   		$("#loadcell1_spsLabel").text( Math.round(msgCount1 *  1000/deltaT));
-   		$("#spsLabel2").text( Math.round(msgCount2 *  1000/deltaT));
-   		msgCount1=0;
-   		msgCount2=0;
+   		$("#3Lobe_spsLabel").text( Math.round(msgCount["3Lobe"] *  1000/deltaT));
+   		msgCount["3Lobe"]=0;
+   		$("#4Lobe_spsLabel").text( Math.round(msgCount["4Lobe"] *  1000/deltaT));
+   		msgCount["4Lobe"]=0;
+   		$("#5Lobe_spsLabel").text( Math.round(msgCount["5Lobe"] *  1000/deltaT));
+   		msgCount["5Lobe"]=0;
    	}
 
-   	var msgCount1 = 0;
-   	var msgCount2 = 0;
 	ws1 = new WebSocket("ws://192.168.1.190:8001");
     ws1.onmessage = function (evt) 
     { 
@@ -43,10 +67,14 @@
     	var data = JSON.parse(evt.data);
 
 // broadcastJsonStr = JSON.stringify({ name : config.name, loadKg : loadKgData, adc : adcData, bat: batData });
+		name = data.name;
+		console.log(name);
 
-		series1.append(new Date().getTime(), data.loadKg);
-		$("#loadcell1_loadLabel").text( ((data.loadKg>0)? "+" : "") + data.loadKg + "Kg");
-		msgCount1++;
+		if (series[name]!= undefined) {
+			series[name].append(new Date().getTime(), data.loadKg);
+			$("#"+name+"_loadLabel").text( data.loadKg.toFixed(2) + "Kg");
+		}
+		msgCount[name]++;
     };
 
  
@@ -77,12 +105,34 @@
 </script>
 <body onload="onLoad()">
 
-<div id="loadcell1">
-	<canvas id="loadcell1_chart" width="1280" height="300"></canvas>
+<div id="5Lobe">
 	<div>
-		<label>ADC reading (battery): </label><span id="loadcell1_adcLabel">?</span><br/>
-		<label>Samples/second: </label><span id="loadcell1_spsLabel">?</span><br/>
-		<label>Load: </label><span id="loadcell1_loadLabel" class="load">?</span><br/>
+		<canvas id="5Lobe_chart" width="1000" height="300"></canvas>
+		<label>Load: </label><span id="5Lobe_loadLabel" class="load">?</span><br/>
+	</div>
+	<div>
+		<label>ADC reading (battery): </label><span id="5Lobe_adcLabel">?</span><br/>
+		<label>Samples/second: </label><span id="5Lobe_spsLabel">?</span><br/>
+	</div>
+</div>
+<div id="4Lobe">
+	<div>
+		<canvas id="4Lobe_chart" width="1000" height="300"></canvas>
+		<label>Load: </label><span id="4Lobe_loadLabel" class="load">?</span><br/>
+	</div>
+	<div>
+		<label>ADC reading (battery): </label><span id="4Lobe_adcLabel">?</span><br/>
+		<label>Samples/second: </label><span id="4Lobe_spsLabel">?</span><br/>
+	</div>
+</div>
+<div id="3Lobe">
+	<div>
+		<canvas id="3Lobe_chart" width="1000" height="300"></canvas>
+		<label>Load: </label><span id="3Lobe_loadLabel" class="load">?</span><br/>
+	</div>
+	<div>
+		<label>ADC reading (battery): </label><span id="3Lobe_adcLabel">?</span><br/>
+		<label>Samples/second: </label><span id="3Lobe_spsLabel">?</span><br/>
 	</div>
 </div>
 
