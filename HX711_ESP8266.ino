@@ -4,6 +4,8 @@
 #include <ESP8266WiFiMulti.h>
 #include <WebSocketsServer.h>
 #include <Hash.h>
+#include <WiFiUdp.h>
+
 
 extern "C" {
 #include "user_interface.h"
@@ -13,15 +15,24 @@ extern "C" {
 
 //the number of this device, [1,2,3 ...]
 
-#define DEVICENAME "LOADCELL_4"
-IPAddress staticIP(192, 168, 1, 194); 
+#define DEVICENAME "LOADCELL_3"
+IPAddress staticIP(192, 168, 1, 193); 
 IPAddress subnet(255, 255, 255, 0); 
 IPAddress gateway(192, 168, 1, 1); 
 
+#define UDP_HOST "192.168.1.190"
+#define UDP_PORT 2222
+#define LOCAL_UDP_PORT 4210
 //wifi SSID and Password
 #include "wifi_details.h"
 
 /************************/
+
+volatile int adcRaw = 0;
+
+
+WiFiUDP udp;
+char udpPacekt[127] = "";
 
 ESP8266WiFiMulti WiFiMulti;
 
@@ -76,9 +87,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
 
 }
 
-int batteryLvl = 0;
-int adcRaw = 0;
-
 void updateBatteryLevel() {
 
   // read the battery level from the ESP8266 analog in pin.
@@ -88,11 +96,9 @@ void updateBatteryLevel() {
   // this means our min analog read value should be 580 (3.14V)
   // and the max analog read value should be 774 (4.2V).
   adcRaw = analogRead(A0);
-
-  // convert battery level to percent
-  batteryLvl = map(adcRaw, 577, 771 , 314, 420);
+  
 #if DEBUG_SERIAL
-  Serial.print(", "); Serial.print(adcRaw); Serial.print(", "); Serial.print(batteryLvl / 100.0); Serial.print("V");
+  Serial.print(", "); Serial.print(adcRaw); 
 #endif
 }
 
@@ -124,10 +130,13 @@ void setup() {
     delay(100);
   }
 
+  udp.begin(LOCAL_UDP_PORT);
+  Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), LOCAL_UDP_PORT);
+
   wifi_set_sleep_type(LIGHT_SLEEP_T);
 
-  webSocket.begin();
-  webSocket.onEvent(webSocketEvent);
+//  webSocket.begin();
+//  webSocket.onEvent(webSocketEvent);
 }
 
 
@@ -181,15 +190,12 @@ void loop() {
   Serial.println();
 #endif
 
-
-  String loadDataStr = String(count) + "," + String(adcRaw) + "," + String(batteryLvl);
-  if (b == SOCKET_BUF_LENGTH) {
-    // WiFi.forceSleepWake();
-    webSocket.broadcastTXT(loadDataStr);
-    b = 0;
-    // WiFi.forceSleepBegin();
-  }
+  String loadDataStr = String(count) + "," + String(adcRaw);
+  loadDataStr.toCharArray(udpPacekt,127);
+  //webSocket.broadcastTXT(loadDataStr);
+  udp.beginPacket(UDP_HOST, UDP_PORT);
+  udp.write(udpPacekt);
+  udp.endPacket();
   delay(10);
-  webSocket.loop();
-
+  //webSocket.loop();
 }

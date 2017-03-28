@@ -1,0 +1,91 @@
+<html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/smoothie/1.27.0/smoothie.min.js"></script>
+<style>
+
+.load {
+	font-size: 144px;
+    font-family: monospace;
+}
+
+</style>
+<script>   	
+	var series1 = new TimeSeries();
+ 
+	function onLoad() {
+		var chart1 = new SmoothieChart({millisPerPixel:10}),
+		    canvas1 = document.getElementById('loadcell1_chart');
+
+		chart1.addTimeSeries(series1, {lineWidth:2,strokeStyle:'#00ff00'});
+		chart1.streamTo(canvas1, 0);
+
+		setInterval(function () { updateSps();},500);
+   	}
+
+   	var lastSpsCalcTime = Date.now();
+
+   	function updateSps() {
+   		currentTime = Date.now();
+   		deltaT = currentTime - lastSpsCalcTime;
+   		lastSpsCalcTime = currentTime;
+   		$("#loadcell1_spsLabel").text( Math.round(msgCount1 *  1000/deltaT));
+   		$("#spsLabel2").text( Math.round(msgCount2 *  1000/deltaT));
+   		msgCount1=0;
+   		msgCount2=0;
+   	}
+
+   	var msgCount1 = 0;
+   	var msgCount2 = 0;
+	ws1 = new WebSocket("ws://192.168.1.190:8001");
+    ws1.onmessage = function (evt) 
+    { 
+    	//console.log("raw: "+evt.data);
+    	var data = JSON.parse(evt.data);
+
+// broadcastJsonStr = JSON.stringify({ name : config.name, loadKg : loadKgData, adc : adcData, bat: batData });
+
+		series1.append(new Date().getTime(), data.loadKg);
+		$("#loadcell1_loadLabel").text( ((data.loadKg>0)? "+" : "") + data.loadKg + "Kg");
+		msgCount1++;
+    };
+
+ 
+ //    function standardDeviation(values){
+	//   var avg = average(values);
+	  
+	//   var squareDiffs = values.map(function(value){
+	//     var diff = value - avg;
+	//     var sqrDiff = diff * diff;
+	//     return sqrDiff;
+	//   });
+	  
+	//   var avgSquareDiff = average(squareDiffs);
+
+	//   var stdDev = Math.sqrt(avgSquareDiff);
+	//   return stdDev;
+	// }
+
+	// function average(data){
+	//   var sum = data.reduce(function(sum, value){
+	//     return sum + value;
+	//   }, 0);
+
+	//   var avg = sum / data.length;
+	//   return avg;
+	// }
+
+</script>
+<body onload="onLoad()">
+
+<div id="loadcell1">
+	<canvas id="loadcell1_chart" width="1280" height="300"></canvas>
+	<div>
+		<label>ADC reading (battery): </label><span id="loadcell1_adcLabel">?</span><br/>
+		<label>Samples/second: </label><span id="loadcell1_spsLabel">?</span><br/>
+		<label>Load: </label><span id="loadcell1_loadLabel" class="load">?</span><br/>
+	</div>
+</div>
+
+
+</body>
+</html>
