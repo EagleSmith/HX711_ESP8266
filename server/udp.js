@@ -1,6 +1,6 @@
 var udp = require('dgram');
-var ws = require("nodejs-websocket")
-
+var ws = require("nodejs-websocket");
+var fs = require("fs");
 
 
 var configuration = {
@@ -91,8 +91,9 @@ udp_server.on('message',function(msg,info){
   console.log(loadData);
   console.log(adcData);
 
-  broadcastJsonStr = JSON.stringify({ name : config.name, loadRaw: loadData, loadKg : loadKgData, adc : adcData, bat: batData });
+  broadcastJsonStr = JSON.stringify({ time: new Date().getTime(), name : config.name, loadRaw: loadData, loadKg : loadKgData, adc : adcData, bat: batData });
   console.log(broadcastJsonStr);
+  fs.appendFile('log.txt', broadcastJsonStr+"\r\n", function (err) { console.log(err); } )
   broadcast(ws_server, broadcastJsonStr);
 });
 
